@@ -21,5 +21,12 @@ def update_info():
 def delete_info():
     return{"msg":"I deleted my info"}
 
+@app.get("/users/{user_id}")
+def get_user(user_id: int, page: int = 1):
+    return{"msg": f"user_id: {user_id}, page: {page}"}
+
+@app.get("/products/{product_id}")
+def get_product(product_id: int, page: int = 1, limit: int = 10):
+    return{"msg": f"product_id: {product_id}, page: {page}, limit: {limit}"}
 
 
