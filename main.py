@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from sqlmodel import SQLModel, Session , select
 from database import engine
-from models import College, Company
+from models import College, Startups
 
 app = FastAPI()
 
@@ -28,10 +28,14 @@ def get_colleges():
 def update_college(id: int, update_data: College):
     with Session(engine) as session:
         college = session.get(College, id)
+        if not college:
+            raise HTTPException(status_code = 404, detail = "not found")
         college.name = update_data.name
         college.email = update_data.email
+
         session.commit()
         session.refresh(college)
+
     return college
 
 
@@ -44,14 +48,62 @@ def get_college(id:int):
             raise HTTPException(status_code = 404, detail = "college not found")
     return college
 
+@app.delete("/colleges/{id}")
+def delete_college(id: int):
+    with Session(engine) as session:
+        college = session.get(College, id)
+        session.delete(college)
+        session.commit()
+    return {"msg":"deleted successfully"}
 
-# @app.post("/company")
-# def create_company():
-#     with Session(engine) as session:
-#         company 
+#startups
+@app.post("/startups")
+def create_startups(startups: Startups):
+    with Session(engine) as session:
+        session.add(startups)
+        session.commit()
+        session.refresh(startups)
+    return startups
 
+@app.get("/startups")
+def get_startups():
+    with Session(engine) as session:
+        startups = session.exec(select(Startups)).all()
+    return startups
 
+@app.get("/startups/{id}")
+def get_startup(id: int):
+    with Session(engine) as session:
+        startup = session.get(Startups, id)
+        if not startup:
+            raise HTTPException(status_code = 404, detail = "not found")
+        return startup
 
+@app.put("/startups/{id}")
+def update_startup(id: int, update_data: Startups):
+    with Session(engine) as session:
+        startup = session.get(Startups, id)
+        if not startup:
+            raise HTTPException(status_code = 404, detail = "not found")
+        startup.name = update_data.name
+        startup.email = update_data.email
+        
+        session.add(startup)
+        session.commit()
+        session.refresh(startup)
+    return startup
+
+@app.delete("/startups/{id}")
+def delete_startup(id: int):
+    with Session(engine) as session:
+        startup = session.get(Startups, id)
+        if not startup:
+            raise HTTPException(status_code = 404, detail = "not found")
+
+        session.delete(startup)
+        session.commit()
+    
+    return {"msg": "deleted"}
 
 @app.get("/")
 def greet():
