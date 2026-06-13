@@ -9,5 +9,5 @@ load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 #CREATE_ENGINE
-engine = create_engine(DATABSE_URL)
+engine = create_engine(DATABASE_URL)
 
