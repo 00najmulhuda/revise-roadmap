@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from sqlmodel import SQLModel, Session , select
 from database import engine
-from models import College, Startups, Founders
+from models import College, Startups, Founders, FounderCreate, FounderRead
 
 app = FastAPI()
 
@@ -10,21 +10,22 @@ def on_startup():
     SQLModel.metadata.create_all(engine)
 
 #founders
-@app.post("/founders")
-def create_founders(founders: Founders):
+@app.post("/founders", response_model = FounderRead, status_code = 201)
+def create_founder(data: FounderCreate):
     with Session(engine) as session:
-        session.add(founders)
+        founder = Founders(**data.dict())
+        session.add(founder)
         session.commit()
-        session.refresh(founders)
-    return founders
+        session.refresh(founder)
+    return founder
 
-@app.get("/founders")
+@app.get("/founders", response_model = list[FounderRead])
 def get_founders():
     with Session(engine) as session:
         founders = session.exec(select(Founders)).all()
     return founders
 
-@app.get("/founders/{id}")
+@app.get("/founders/{id}", response_model = FounderRead)
 def get_founder(id: int):
     with Session(engine) as session:
         founder = session.get(Founders, id)
@@ -32,8 +33,8 @@ def get_founder(id: int):
             raise HTTPException(status_code = 404, detail = "not found")
     return founder
 
-@app.put("/founders/{id}")
-def update_founder(id: int, update_data: Founders):
+@app.put("/founders/{id}", response_model = FounderRead)
+def update_founder(id: int, update_data: FounderCreate):
     with Session(engine) as session:
         founder = session.get(Founders, id)
         if not founder:

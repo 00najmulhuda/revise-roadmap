@@ -14,3 +14,12 @@ class Founders(SQLModel, table = True):
     id : int | None = Field(default = None, primary_key = True)
     name : str
     email : str
+
+class FounderCreate(SQLModel):
+    name: str
+    email:str
+
+class FounderRead(SQLModel):
+    id : int
+    name : str
+    email : str
