@@ -1,13 +1,62 @@
 from fastapi import FastAPI, HTTPException
 from sqlmodel import SQLModel, Session , select
 from database import engine
-from models import College, Startups
+from models import College, Startups, Founders
 
 app = FastAPI()
 
 @app.on_event("startup")
 def on_startup():
     SQLModel.metadata.create_all(engine)
+
+#founders
+@app.post("/founders")
+def create_founders(founders: Founders):
+    with Session(engine) as session:
+        session.add(founders)
+        session.commit()
+        session.refresh(founders)
+    return founders
+
+@app.get("/founders")
+def get_founders():
+    with Session(engine) as session:
+        founders = session.exec(select(Founders)).all()
+    return founders
+
+@app.get("/founders/{id}")
+def get_founder(id: int):
+    with Session(engine) as session:
+        founder = session.get(Founders, id)
+        if not founder:
+            raise HTTPException(status_code = 404, detail = "not found")
+    return founder
+
+@app.put("/founders/{id}")
+def update_founder(id: int, update_data: Founders):
+    with Session(engine) as session:
+        founder = session.get(Founders, id)
+        if not founder:
+            raise HTTPException(status_code = 404, detail = "not found")
+        founder.name = update_data.name
+        founder.email = update_data.email
+
+        session.commit()
+        session.refresh(founder)
+    return founder
+
+@app.delete("/founders/{id}")
+def delete_founder(id: int):
+    with Session(engine) as session:
+        founder = session.get(Founders, id)
+        if not founder:
+            raise HTTPException(status_code = 404, detail = "not found")
+        session.delete(founder)
+        session.commit()
+    
+    return {"msg": "deletedd"}
+
+
 
 
 @app.post("/colleges")
