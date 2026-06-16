@@ -1,5 +1,5 @@
-from sqlmodel import SQLModel, Field
-
+from sqlmodel import SQLModel, Field, Relationship
+from typing import List
 class College(SQLModel, table = True):
     id : int | None = Field(default = None, primary_key = True) #in DB - id is primary key
     name : str  #in db column 
@@ -23,3 +23,84 @@ class FounderRead(SQLModel):
     id : int
     name : str
     email : str
+
+class Teacher(SQLModel, table = True):
+    id : int | None = Field(default = None, primary_key = True)
+    name : str
+
+    students : List["Student"] = Relationship(
+        back_populates = "teacher"
+    )
+
+
+
+class Enrollment(SQLModel, table = True):
+    student_id : int = Field(
+        foreign_key = "student.id",
+        primary_key = True
+    )
+
+    course_id : int = Field(
+        foreign_key = "course.id",
+        primary_key = True
+    )
+
+
+class Student(SQLModel, table = True):
+    id : int | None = Field(default = None, primary_key = True)
+    name : str
+
+    teacher_id : int = Field(
+        foreign_key = "teacher.id"
+    )
+
+    teacher : "Teacher" = Relationship(
+        back_populates = "students"
+    )
+    courses : List["Course"] = Relationship(
+        back_populates = "students",
+        link_model = Enrollment
+    )
+
+
+
+class Course(SQLModel, table = True):
+    id : int | None = Field(default = None, primary_key = True)
+    course_name : str
+    
+    students : List["Student"] = Relationship(
+        back_populates = "courses",
+        link_model = Enrollment
+    )
+
+
+#MentorSkill class
+class MentorSkill(SQLModel, table = True):
+    mentor_id : int = Field(
+        foreign_key = "mentor.id",
+        primary_key = True
+    )
+
+    skill_id : int = Field(
+        foreign_key = "skill.id",
+        primary_key = True
+    )
+
+#mentor class 
+class Mentor(SQLModel, table = True):
+    id : int | None = Field(default = None, primary_key = True)
+    mentor_name : str
+
+    skills : List["Skill"] = Relationship(
+        back_populates = "mentors",
+        link_model = MentorSkill
+    )
+
+class Skill(SQLModel, table = True):
+    id : int | None = Field(default = None, primary_key = True)
+    skill_name : str
+
+    mentors : List["Mentor"] = Relationship(
+        back_populates = "skills",
+        link_model = MentorSkill
+    )

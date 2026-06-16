@@ -1,15 +1,263 @@
 from fastapi import FastAPI, HTTPException
 from sqlmodel import SQLModel, Session , select
 from database import engine
-from models import College, Startups, Founders, FounderCreate, FounderRead
+from models import College, Startups, Founders, FounderCreate, FounderRead, Teacher, Student,Course, Enrollment, Mentor, Skill, MentorSkill
 
 app = FastAPI()
 
 @app.on_event("startup")
 def on_startup():
     SQLModel.metadata.create_all(engine)
+#mentor-----------------------------------------------------------------
+@app.post("/mentors")
+def create_mentor(mentor : Mentor):
+    with Session(engine) as session:
+        session.add(mentor)
+        session.commit()
+        session.refresh(mentor)
 
-#founders
+        return mentor
+
+@app.get("/mentors")
+def get_mentors():
+    with Session(engine) as session:
+        mentors = session.exec(
+            select(Mentor)
+        ).all()
+
+        if not mentors:
+            raise HTTPException(
+                status_code = 404, 
+                detail = "not found mentors"
+            )
+        return mentors
+
+@app.get("/mentors/{mentor_id}")
+def get_mentor(mentor_id : int):
+    with Session(engine) as session:
+        mentor = session.get(Mentor, mentor_id)
+        if not mentor:
+            raise HTTPException(
+                status_code = 404, 
+                detail = "mentor not found"
+            )
+        return mentor
+
+@app.get("/mentors/{mentor_id}/skills")
+def get_mentor_skills(mentor_id : int):
+    with Session(engine) as session:
+        mentor = session.get(Mentor, mentor_id)
+        if not mentor:
+            raise HTTPException(
+                status_code = 404,
+                detail = "mentor skills not found"
+            )
+        return mentor.skills
+#Skill-----------------------------------------------------------------
+@app.post("/skills")
+def create_skill(skill : Skill):
+    with Session(engine) as session:
+        session.add(skill)
+        session.commit()
+        session.refresh(skill)
+        return skill
+
+@app.get("/skills")
+def get_skills():
+    with Session(engine) as session:
+        skills = session.exec(
+            select(Skill)
+        ).all()
+        if not skills:
+            raise HTTPException(
+                status_code = 404,
+                detail = "skills not found"
+            )
+        return skills
+
+@app.get("/skills/{skill_id}")
+def get_skill(skill_id : int):
+    with Session(engine) as session:
+        skill = session.get(Skill, skill_id)
+        if not skill:
+            raise HTTPException(
+               status_code = 404,
+               detail = "skill not found"
+            )
+        return skill
+
+@app.get("/skills/{skill_id}/mentors")
+def get_skill_mentors(skill_id : int):
+    with Session(engine) as session:
+        skill = session.get(Skill, skill_id)
+        if not skill:
+            raise HTTPException(
+                status_code = 404, 
+                detail = "this skill mentors not found"
+            )
+        return skill.mentors
+#MentorSkill-----------------------------------------------------------
+@app.post("/mentorskills")
+def create_mentor_skill(mentorskill : MentorSkill):
+    with Session(engine) as session:
+        session.add(mentorskill)
+        session.commit()
+        session.refresh(mentorskill)
+        return mentorskill
+
+@app.get("/mentorskills")
+def get_mentor_skills():
+    with Session(engine) as session:
+        mentorskill = session.exec(
+            select(MentorSkill)
+        ).all()
+        if not mentorskill:
+            raise HTTPException(
+                status_code = 404,
+                detail = "nemtorskill not found"
+            )
+        return mentorskill
+#teachers-----------------------------------------------------------------
+@app.post("/teachers")
+def create_teacher(teacher: Teacher):
+    with Session(engine) as session:
+        session.add(teacher)
+        session.commit()
+        session.refresh(teacher)
+    return teacher
+
+@app.get("/teacher")
+def get_teachers():
+    with Session(engine) as session:
+        teachers = session.exec(
+            select(Teacher)
+        ).all
+    return teachers
+
+@app.get("/teachers/{teacher_id}")
+def get_teacher(teacher_id: int):
+    with Session(engine) as session:
+        teacher = session.get(Teacher, teacher_id)
+        if not teacher:
+            raise HTTPException(status_code = 404, detail = "not found")
+    return teacher
+
+@app.get("/teachers/{teacher_id}/students")
+def get_teacher_student(teacher_id : int):
+    with Session(engine) as session:
+        teacher = session.get(Teacher, teacher_id)
+
+        if not teacher:
+            raise HTTPException(
+                status_code = 404,
+                detail = "not found this teacher students"
+            )
+        return teacher.students
+
+
+#students -  ------------------------------------------------------
+@app.post("/students")
+def create_student(student: Student):
+    with Session(engine) as session:
+        session.add(student)
+        session.commit()
+        session.refresh(student)
+    return student
+
+
+@app.get("/students")
+def get_students():
+    with Session(engine) as session:
+        students = session.exec(
+            select(Student)
+        ).all()
+
+    return students
+
+@app.get("/students/{student_id}")
+def get_student(student_id : int):
+    with Session(engine) as session:
+        student = session.get(Student, student_id)
+        if not student:
+            raise HTTPException(status_code = 404, detail = "Not found Student")
+    return student
+
+@app.get("/students/{student_id}/teachers")
+def get_student_teacher(student_id : int):
+    with Session(engine) as session:
+        student = session.get(Student, student_id)
+        if not student:
+            raise HTTPException(status_code = 404, detail = "this student id not found")
+        return student.teacher
+
+@app.get("/students/{student_id}/courses")
+def get_student_courses(student_id : int):
+    with Session(engine) as session:
+        student = session.get(Student, student_id)
+
+        if not student:
+            raise HTTPException(
+                status_code = 404,
+                detail = "student not found"
+            )
+
+        return student.courses
+
+
+#course ----------------------------------------------------------------
+@app.post("/courses")
+def create_course(course : Course):
+    with Session(engine) as session:
+        session.add(course)
+        session.commit()
+        session.refresh(course)
+
+        return course
+
+@app.get("/courses")
+def get_course():
+    with Session(engine) as session:
+        courses = session.exec(select(Course)).all()
+        if not courses:
+            raise HTTPException(
+                status_code = 404, 
+                detail = "not found course"
+            )
+        return courses
+
+@app.get("/courses/{course_id}/students")
+def get_course_students(course_id : int):
+    with Session(engine) as session:
+        course = session.get(Course, course_id)
+        
+        if not course:
+            raise HTTPException(
+                status_code = 404,
+                detail = "not found students of this course"
+            )
+        return course.students
+#enrollment----------------------------------------------------------------
+@app.post("/enrollments")
+def create_enrollment(enrollment : Enrollment):
+    with Session(engine) as session:
+        session.add(enrollment)
+        session.commit()
+        session.refresh(enrollment)
+        return enrollment
+
+@app.get("/enrollments")
+def get_enrollments():
+    with Session(engine) as session:
+        enrollments = session.exec(select(Enrollment)).all()
+        if not enrollments:
+            raise HTTPException(
+                status_code = 404,
+                detail = "not found enroll"
+            )
+        return enrollments
+
+
+#founders-------------------------------------------------------------------------------
 @app.post("/founders", response_model = FounderRead, status_code = 201)
 def create_founder(data: FounderCreate):
     with Session(engine) as session:
@@ -58,7 +306,7 @@ def delete_founder(id: int):
     return {"msg": "deletedd"}
 
 
-
+#colleges ----------------------------------------------------------------
 
 @app.post("/colleges")
 def create_college(college: College):
@@ -106,7 +354,7 @@ def delete_college(id: int):
         session.commit()
     return {"msg":"deleted successfully"}
 
-#startups
+#startups-----------------------------------------------------------------
 @app.post("/startups")
 def create_startups(startups: Startups):
     with Session(engine) as session:
@@ -155,6 +403,10 @@ def delete_startup(id: int):
     
     return {"msg": "deleted"}
 
+
+
+
+#learning route ------------------------------------------------------------------
 @app.get("/")
 def greet():
     return{"msg":"Hello Najmul!"}
