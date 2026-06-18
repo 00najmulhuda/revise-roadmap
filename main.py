@@ -1,13 +1,65 @@
 from fastapi import FastAPI, HTTPException
 from sqlmodel import SQLModel, Session , select
 from database import engine
-from models import College, Startups, Founders, FounderCreate, FounderRead, Teacher, Student,Course, Enrollment, Mentor, Skill, MentorSkill
-
+from models import College, Startups, Founders, FounderCreate, FounderRead, Teacher, Student,Course, Enrollment, Mentor, Skill, MentorSkill, Library, Book, LibraryCreate, LibraryRead , Account, AccountRead, AccountCreate ,LoginRequest
+from auth import hash_password , create_access_token, verify_password
 app = FastAPI()
 
 @app.on_event("startup")
 def on_startup():
     SQLModel.metadata.create_all(engine)
+
+
+#account Signup route -------------------------------------------------------
+@app.post("/signup", response_model = AccountRead, status_code = 201)
+def signup(account : AccountCreate):
+    hashed_password = hash_password(
+        account.password
+    )
+
+    new_account = Account(
+        email = account.email,
+        password = hashed_password
+    )
+    with Session(engine) as session:
+        session.add(new_account)
+        session.commit()
+        session.refresh(new_account)
+        return new_account
+
+#login route---------------------------------------------------
+@app.post("/login")
+def login(data : LoginRequest):
+    with Session(engine) as session:
+        account = session.exec(
+            select(Account)
+            .where(Account.email == data.email)
+        ).first()
+        if not account:
+            raise HTTPException(
+                status_code = 404, detail = "not found email"
+            )
+        if not verify_password(
+            data.password,
+            account.password
+        ):
+            raise HTTPException(
+                status_code = 404,
+                detail = "Invalid"
+            )
+
+        acceess_token = create_access_token(
+            {
+                "user_id" : account.id,
+                "email" : account.email
+            }
+        )
+        return {
+            "access_token" : acceess_token
+        }
+
+#library------------------------------------------------------------------
+
 #mentor-----------------------------------------------------------------
 @app.post("/mentors")
 def create_mentor(mentor : Mentor):

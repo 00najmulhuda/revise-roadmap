@@ -1,5 +1,7 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import List
+
+
 class College(SQLModel, table = True):
     id : int | None = Field(default = None, primary_key = True) #in DB - id is primary key
     name : str  #in db column 
@@ -104,3 +106,72 @@ class Skill(SQLModel, table = True):
         back_populates = "skills",
         link_model = MentorSkill
     )
+
+
+#Company - employee classes - ------------------------------------------------
+class Library(SQLModel, table = True):
+    id: int | None = Field(default = None, primary_key = True)
+    name : str
+
+    books : List["Book"] = Relationship(
+        back_populates = "library"
+    )
+    
+    
+
+class Book(SQLModel, table = True):
+    id: int | None = Field(default = None, primary_key = True)
+    name : str
+
+    library_id : int = Field(
+        foreign_key = "library.id"
+    )
+
+    library : "Library" = Relationship(
+        back_populates = "books"
+    )
+
+    library_id : int = Field(
+        foreign_key = "library.id"
+    )
+
+#response_model
+class LibraryCreate(SQLModel):
+    name : str
+    
+
+class LibraryRead(SQLModel):
+    id : int
+    name : str
+    
+
+class BookCreate(SQLModel):
+    name : str
+    library_id : int
+
+class BookRead(SQLModel):
+    id : int
+    name : str
+    library_id : int
+
+
+#account-------------------------------------------------------------------------
+class Account(SQLModel, table = True):
+    id : int | None = Field(default = None, primary_key = True)
+    email : str
+    password : str
+
+#Account response_model-------
+class AccountCreate(SQLModel):
+    email : str
+    password : str
+
+#potput model
+class AccountRead(SQLModel):
+    id : int 
+    email : str
+
+#Login request model
+class LoginRequest(SQLModel):
+    email : str
+    password : str
