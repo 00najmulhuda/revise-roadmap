@@ -1,14 +1,22 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from sqlmodel import SQLModel, Session , select
 from database import engine
 from models import College, Startups, Founders, FounderCreate, FounderRead, Teacher, Student,Course, Enrollment, Mentor, Skill, MentorSkill, Library, Book, LibraryCreate, LibraryRead , Account, AccountRead, AccountCreate ,LoginRequest
-from auth import hash_password , create_access_token, verify_password
+from auth import hash_password , create_access_token, verify_password, verify_token
+from fastapi.security import OAuth2PasswordBearer
+
+
+
+
 app = FastAPI()
 
 @app.on_event("startup")
 def on_startup():
     SQLModel.metadata.create_all(engine)
 
+oauth2_schemes = OAuth2PasswordBearer(
+    tokenUrl = "login"
+)
 
 #account Signup route -------------------------------------------------------
 @app.post("/signup", response_model = AccountRead, status_code = 201)
@@ -58,6 +66,13 @@ def login(data : LoginRequest):
             "access_token" : acceess_token
         }
 
+#Profile protected route------------------------------------------------
+@app.get("/profile")
+def get_profile(token : Str = Depends(oauth2_schemes)):
+    
+    payload = verify_token(token)
+
+    return payload
 #library------------------------------------------------------------------
 
 #mentor-----------------------------------------------------------------
