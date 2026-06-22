@@ -4,11 +4,14 @@ from database import engine
 from models import College, Startups, Founders, FounderCreate, FounderRead, Teacher, Student,Course, Enrollment, Mentor, Skill, MentorSkill, Library, Book, LibraryCreate, LibraryRead , Account, AccountRead, AccountCreate ,LoginRequest
 from auth import hash_password , create_access_token, verify_password, verify_token
 from fastapi.security import OAuth2PasswordBearer
-
+from auth_routes import router as auth_router
+from auth_models import NewUser
 
 
 
 app = FastAPI()
+
+app.include_router(auth_router)#means FAstAPI please include all routes from auth_routes.py without this main.py not consider auth_routes.py routes
 
 @app.on_event("startup")
 def on_startup():

@@ -2,6 +2,7 @@ from passlib.context import CryptContext
 from jose import jwt
 from datetime import datetime, timedelta
 
+#tool of hashed password and verify password
 pwd_context = CryptContext(
     schemes = ["bcrypt"],
     deprecated = "auto"
@@ -44,4 +45,4 @@ def verify_token(token : str):
         SECRET_KEY,
         algorithms = [ALGORITHM]
     )
-    return payload
+    return payload.get("user_id")
