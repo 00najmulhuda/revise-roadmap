@@ -4,12 +4,12 @@ from sqlmodel import Session , select
 from database import engine
 from auth_models import NewUser
 from auth_schemas import RegisterUser, LoginUser
-from auth import hash_password, verify_password, create_access_token, verify_token
-from fastapi.security import OAuth2PasswordBearer
+from auth import hash_password, verify_password, create_access_token, verify_token, get_current_user, require_role,oauth2_scheme
 
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl = "/auth/login"
-)
+
+
+
+
 
 router = APIRouter(
     prefix = "/auth",
@@ -60,7 +60,8 @@ def user_login(user : LoginUser):
         access_token = create_access_token(
                 {
                     "user_id" : check_email.id,
-                    "email" : check_email.email
+                    "email" : check_email.email,
+                    "role" : check_email.role
                 }
         )
         return {
@@ -79,17 +80,17 @@ def get_user_profile(token : str = Depends(oauth2_scheme)):
 
 
 @router.get("/me")
-def get_current_user(token : str = Depends(oauth2_scheme)):
-    user_id = verify_token(token)
-    
-    with Session(engine) as session:
-        db_user = session.exec(
-            select(NewUser)
-            .where(NewUser.id == int(user_id))
-        ).first()
+def get_me(current_user = Depends(get_current_user)):
+    return {
+        "id" : current_user.id,
+        "username" : current_user.username,
+        "email" : current_user.email,
+        "role" : current_user.role
+    }
 
-        return {
-            "id" : db_user.id,
-            "username" : db_user.username,
-            "email" : db_user.email
-        }
+@router.get("/admin")
+def admin_dashboard(current_user : NewUser = Depends(require_role("admin"))):
+    return {
+        "message" : "welcome admin",
+        "user" : current_user.username
+    }

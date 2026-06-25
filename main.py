@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from sqlmodel import SQLModel, Session , select
 from database import engine
 from models import College, Startups, Founders, FounderCreate, FounderRead, Teacher, Student,Course, Enrollment, Mentor, Skill, MentorSkill, Library, Book, LibraryCreate, LibraryRead , Account, AccountRead, AccountCreate ,LoginRequest
-from auth import hash_password , create_access_token, verify_password, verify_token
+from auth import hash_password , create_access_token, verify_password, verify_token, get_current_user, require_role
 from fastapi.security import OAuth2PasswordBearer
 from auth_routes import router as auth_router
 from auth_models import NewUser
@@ -365,7 +365,7 @@ def update_founder(id: int, update_data: FounderCreate):
     return founder
 
 @app.delete("/founders/{id}")
-def delete_founder(id: int):
+def delete_founder(id: int, current_user : NewUser = Depends(require_role("admin"))):
     with Session(engine) as session:
         founder = session.get(Founders, id)
         if not founder:
@@ -373,7 +373,7 @@ def delete_founder(id: int):
         session.delete(founder)
         session.commit()
     
-    return {"msg": "deletedd"}
+    return {"msg": "deletedd by admin"}
 
 
 #colleges ----------------------------------------------------------------
