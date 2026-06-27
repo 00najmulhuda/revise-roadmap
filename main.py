@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Request
 from sqlmodel import SQLModel, Session , select
 from database import engine
 from models import College, Startups, Founders, FounderCreate, FounderRead, Teacher, Student,Course, Enrollment, Mentor, Skill, MentorSkill, Library, Book, LibraryCreate, LibraryRead , Account, AccountRead, AccountCreate ,LoginRequest
@@ -6,10 +6,30 @@ from auth import hash_password , create_access_token, verify_password, verify_to
 from fastapi.security import OAuth2PasswordBearer
 from auth_routes import router as auth_router
 from auth_models import NewUser
+from fastapi.responses import JSONResponse
 
 
 
 app = FastAPI()
+
+@app.exception_handler(Exception)
+async def global_exception_handler(
+    request : Request,
+    exc : Exception
+):
+   return JSONResponse(
+    status_code = 500,
+    content = {
+        "success" : False,
+        "message" : "Internal server error"
+    }
+   )
+
+@app.get("/test-error")
+def test_error():
+    x = 10/0
+    return x
+
 
 app.include_router(auth_router)#means FAstAPI please include all routes from auth_routes.py without this main.py not consider auth_routes.py routes
 
@@ -352,7 +372,7 @@ def get_founder(id: int):
     return founder
 
 @app.put("/founders/{id}", response_model = FounderRead)
-def update_founder(id: int, update_data: FounderCreate):
+def update_founder(id: int, update_data: FounderCreate, current_user : NewUser = Depends(get_current_user)):
     with Session(engine) as session:
         founder = session.get(Founders, id)
         if not founder:
